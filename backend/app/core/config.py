@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Smart Agriculture API"
     API_V1_STR: str = "/api/v1"
     
+    # Base directory
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
     # PostgreSQL Database
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "agri_user")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "agri_password")

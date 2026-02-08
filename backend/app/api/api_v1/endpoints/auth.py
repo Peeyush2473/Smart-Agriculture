@@ -35,10 +35,10 @@ def create_user(
 ) -> Any:
     user = db.query(UserModel).filter(UserModel.username == user_in.username).first()
     if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this username already exists in the system.",
-        )
+        return {
+        "success": False, 
+        "message": "This username is already taken. Please try another one."
+    }
     user_obj = UserModel(
         username=user_in.username,
         email=user_in.email,

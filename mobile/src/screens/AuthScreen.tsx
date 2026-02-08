@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { login } from '../services/authService';
+import { Button, Input } from '../components';
+import { colors, typography } from '../theme';
 
 const AuthScreen = ({ navigation }: any) => {
     const [username, setUsername] = useState('');
@@ -25,39 +27,107 @@ const AuthScreen = ({ navigation }: any) => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Smart Agri</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-            <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.link}>Don't have an account? Sign up</Text>
-            </TouchableOpacity>
-        </View>
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.header}>
+                    <View style={styles.iconContainer}>
+                        <Text style={styles.icon}>🌾</Text>
+                    </View>
+                    <Text style={styles.title}>Safal Fasal</Text>
+                    <Text style={styles.subtitle}>Welcome back! Sign in to continue</Text>
+                </View>
+
+                <View style={styles.form}>
+                    <Input
+                        placeholder="Username"
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                    />
+                    <Input
+                        placeholder="Password"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                    />
+
+                    <Button
+                        title="Login"
+                        onPress={handleLogin}
+                        loading={loading}
+                        style={styles.loginButton}
+                    />
+
+                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                        <Text style={styles.link}>
+                            Don't have an account? <Text style={styles.linkBold}>Sign up</Text>
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#f5f5f5' },
-    title: { fontSize: 32, fontWeight: 'bold', marginBottom: 40, textAlign: 'center', color: '#2e7d32' },
-    input: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#ddd' },
-    button: { backgroundColor: '#2e7d32', padding: 15, borderRadius: 10, alignItems: 'center' },
-    buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    link: { marginTop: 20, textAlign: 'center', color: '#2e7d32' },
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: 24,
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: 40,
+    },
+    iconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    icon: {
+        fontSize: 40,
+    },
+    title: {
+        fontSize: typography.fontSizes.xxxl,
+        fontWeight: typography.fontWeights.bold,
+        color: colors.primary,
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: typography.fontSizes.md,
+        color: colors.textLight,
+        textAlign: 'center',
+    },
+    form: {
+        width: '100%',
+    },
+    loginButton: {
+        marginTop: 8,
+        marginBottom: 24,
+    },
+    link: {
+        textAlign: 'center',
+        color: colors.textLight,
+        fontSize: typography.fontSizes.md,
+    },
+    linkBold: {
+        color: colors.primary,
+        fontWeight: typography.fontWeights.bold,
+    },
 });
 
 export default AuthScreen;

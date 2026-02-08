@@ -17,8 +17,8 @@ const AppNavigator = () => {
                 <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Signup" component={SignupScreen} options={{ title: 'Create Account' }} />
                 <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="Disease" component={DiseaseScreen} options={{ title: 'Disease Detection' }} />
-                <Stack.Screen name="Crops" component={CropRecommendationScreen} options={{ title: 'Crop Recommendation' }} />
+                <Stack.Screen name="Disease" component={DiseaseScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Crops" component={CropRecommendationScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Weather" component={WeatherScreen} options={{ title: 'Weather Intelligence' }} />
             </Stack.Navigator>
         </NavigationContainer>

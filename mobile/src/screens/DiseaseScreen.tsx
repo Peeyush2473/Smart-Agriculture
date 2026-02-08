@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { detectDisease } from '../services/featureService';
 import { DiseaseResult } from '../types';
+import { Card, Button } from '../components';
+import { colors, typography } from '../theme';
 
-const DiseaseScreen = () => {
+const DiseaseScreen = ({ navigation }: any) => {
     const [image, setImage] = useState<string | null>(null);
     const [result, setResult] = useState<DiseaseResult | null>(null);
     const [loading, setLoading] = useState(false);
@@ -56,61 +59,297 @@ const DiseaseScreen = () => {
         }
     };
 
+    const handleRemoveImage = () => {
+        setImage(null);
+        setResult(null);
+    };
+
+    const isHealthy = result?.disease_name?.toLowerCase().includes('healthy');
+    const statusColor = isHealthy ? colors.success : colors.error;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.imageContainer}>
-                {image ? (
-                    <Image source={{ uri: image }} style={styles.image} />
+        <View style={styles.container}>
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.7}
+            >
+                <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.header}>
+                    <View style={styles.headerIconContainer}>
+                        <Ionicons name="scan-outline" size={32} color={colors.primary} />
+                    </View>
+                    <Text style={styles.headerTitle}>Disease Detection</Text>
+                    <Text style={styles.headerSubtitle}>Identify plant diseases instantly</Text>
+                </View>
+
+                {!image ? (
+                    <TouchableOpacity style={styles.uploadPlaceholder} onPress={pickImage} activeOpacity={0.8}>
+                        <View style={styles.uploadIconCircle}>
+                            <Ionicons name="camera-outline" size={32} color={colors.primary} />
+                        </View>
+                        <Text style={styles.uploadTitle}>Tap to Upload Image</Text>
+                        <Text style={styles.uploadSubtitle}>or choose from gallery</Text>
+                    </TouchableOpacity>
                 ) : (
-                    <View style={styles.placeholder}>
-                        <Text style={styles.placeholderText}>No Image Selected</Text>
+                    <View style={styles.imageContainer}>
+                        <Image source={{ uri: image }} style={styles.previewImage} />
+                        <TouchableOpacity style={styles.removeButton} onPress={handleRemoveImage}>
+                            <Ionicons name="close" size={20} color={colors.white} />
+                        </TouchableOpacity>
+
+                        {!result && (
+                            <View style={styles.analyzeOverlay}>
+                                <Button
+                                    title="Analyze Disease"
+                                    onPress={handleAnalyze}
+                                    loading={loading}
+                                    variant="primary"
+                                    style={styles.analyzeButton}
+                                />
+                            </View>
+                        )}
                     </View>
                 )}
-            </View>
 
-            <View style={styles.controls}>
-                <TouchableOpacity style={styles.button} onPress={pickImage}>
-                    <Text style={styles.buttonText}>Upload Image</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.cameraButton]} onPress={takePhoto}>
-                    <Text style={styles.buttonText}>Take Photo</Text>
-                </TouchableOpacity>
-            </View>
+                {!image && (
+                    <Button
+                        title="Take Photo"
+                        onPress={takePhoto}
+                        variant="secondary"
+                        style={styles.actionButton}
+                    />
+                )}
 
-            {image && !result && (
-                <TouchableOpacity style={[styles.button, styles.analyzeButton]} onPress={handleAnalyze} disabled={loading}>
-                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Analyze Disease</Text>}
-                </TouchableOpacity>
-            )}
+                {result && (
+                    <Card style={[styles.resultCard, { borderColor: statusColor }]}>
+                        <View style={styles.resultHeader}>
+                            <View style={[styles.statusIcon, { backgroundColor: statusColor + '20' }]}>
+                                <Ionicons
+                                    name={isHealthy ? "checkmark-circle" : "alert-circle"}
+                                    size={32}
+                                    color={statusColor}
+                                />
+                            </View>
+                            <View style={styles.resultHeaderText}>
+                                <Text style={styles.resultTitle}>
+                                    {result.disease_name.replace(/_/g, ' ')}
+                                </Text>
+                                <View style={styles.confidenceBadge}>
+                                    <Text style={[styles.confidenceText, { color: statusColor }]}>
+                                        {(result.confidence * 100).toFixed(1)}% Confidence
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
 
-            {result && (
-                <View style={styles.resultContainer}>
-                    <Text style={styles.resultTitle}>Result: {result.disease_name}</Text>
-                    <Text style={styles.confidence}>Confidence: {(result.confidence * 100).toFixed(1)}%</Text>
-                    <Text style={styles.sectionHeader}>Treatment:</Text>
-                    <Text style={styles.treatment}>{result.treatment}</Text>
-                </View>
-            )}
-        </ScrollView>
+                        <View style={styles.divider} />
+
+                        <View style={styles.treatmentSection}>
+                            <View style={styles.sectionTitleRow}>
+                                <Ionicons name="medkit-outline" size={20} color={colors.text} />
+                                <Text style={styles.sectionTitle}>Treatment & Care</Text>
+                            </View>
+                            <Text style={styles.treatmentText}>{result.treatment}</Text>
+                        </View>
+                    </Card>
+                )}
+            </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { padding: 20, alignItems: 'center' },
-    imageContainer: { width: '100%', height: 300, borderRadius: 15, overflow: 'hidden', backgroundColor: '#eee', marginBottom: 20, marginTop: 20 },
-    image: { width: '100%', height: '100%' },
-    placeholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    placeholderText: { color: '#888' },
-    controls: { flexDirection: 'row', width: '100%', justifyContent: 'space-around', marginBottom: 20 },
-    button: { backgroundColor: '#2196f3', padding: 12, borderRadius: 8, minWidth: 120, alignItems: 'center' },
-    cameraButton: { backgroundColor: '#ff9800' },
-    analyzeButton: { backgroundColor: '#4caf50', width: '100%' },
-    buttonText: { color: '#fff', fontWeight: 'bold' },
-    resultContainer: { backgroundColor: '#e8f5e9', padding: 20, borderRadius: 10, width: '100%', marginTop: 20 },
-    resultTitle: { fontSize: 20, fontWeight: 'bold', color: '#2e7d32', marginBottom: 5 },
-    confidence: { color: '#666', marginBottom: 10 },
-    sectionHeader: { fontWeight: 'bold', marginTop: 10 },
-    treatment: { marginTop: 5, lineHeight: 20 },
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+        marginTop: 20,
+    },
+    backButton: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 50 : 20,
+        left: 20,
+        zIndex: 10,
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: colors.white,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    scrollContent: {
+        padding: 24,
+        paddingTop: 60,
+        paddingBottom: 40,
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    headerIconContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: colors.primary + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    headerTitle: {
+        fontSize: typography.fontSizes.xxl,
+        fontWeight: typography.fontWeights.bold,
+        color: colors.text,
+        marginBottom: 8,
+    },
+    headerSubtitle: {
+        fontSize: typography.fontSizes.md,
+        color: colors.textLight,
+        textAlign: 'center',
+    },
+    uploadPlaceholder: {
+        borderWidth: 2,
+        borderColor: colors.border,
+        borderStyle: 'dashed',
+        borderRadius: 24,
+        height: 240,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.surface,
+        marginBottom: 24,
+    },
+    uploadIconCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: colors.primary + '10',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    uploadTitle: {
+        fontSize: typography.fontSizes.lg,
+        fontWeight: typography.fontWeights.bold,
+        color: colors.text,
+        marginBottom: 4,
+    },
+    uploadSubtitle: {
+        fontSize: typography.fontSizes.sm,
+        color: colors.textSecondary,
+    },
+    imageContainer: {
+        height: 320,
+        borderRadius: 24,
+        overflow: 'hidden',
+        marginBottom: 24,
+        position: 'relative',
+        backgroundColor: colors.black,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+    },
+    previewImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    removeButton: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 5,
+    },
+    analyzeOverlay: {
+        position: 'absolute',
+        bottom: 24,
+        left: 24,
+        right: 24,
+    },
+    analyzeButton: {
+        width: '100%',
+        shadowColor: colors.primary,
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+    },
+    actionButton: {
+        width: '100%',
+    },
+    resultCard: {
+        borderWidth: 1.5,
+        padding: 24,
+    },
+    resultHeader: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 20,
+    },
+    statusIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    resultHeaderText: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    resultTitle: {
+        fontSize: typography.fontSizes.xl,
+        fontWeight: typography.fontWeights.bold,
+        color: colors.text,
+        marginBottom: 6,
+        flexWrap: 'wrap',
+    },
+    confidenceBadge: {
+        backgroundColor: colors.background,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+    },
+    confidenceText: {
+        fontSize: typography.fontSizes.xs,
+        fontWeight: typography.fontWeights.bold,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: colors.border,
+        marginBottom: 20,
+    },
+    treatmentSection: {
+        gap: 8,
+    },
+    sectionTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 4,
+    },
+    sectionTitle: {
+        fontSize: typography.fontSizes.md,
+        fontWeight: typography.fontWeights.bold,
+        color: colors.text,
+    },
+    treatmentText: {
+        fontSize: typography.fontSizes.md,
+        color: colors.textLight,
+        lineHeight: 24,
+    },
 });
 
 export default DiseaseScreen;
