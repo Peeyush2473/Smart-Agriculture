@@ -2,19 +2,28 @@ import api from './api';
 import { CropResponse, DiseaseResult, WeatherData } from '../types';
 
 export const detectDisease = async (imageUri: string): Promise<DiseaseResult> => {
-    const formData = new FormData();
+    try {
+        const formData = new FormData();
 
-    // React Native FormData handling for images
-    const filename = imageUri.split('/').pop();
-    const match = /\.(\w+)$/.exec(filename || '');
-    const type = match ? `image/${match[1]}` : `image`;
+        // React Native FormData handling for images
+        const filename = imageUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename || '');
+        const type = match ? `image/${match[1]}` : `image`;
 
-    formData.append('file', { uri: imageUri, name: filename, type } as any);
+        formData.append('file', { uri: imageUri, name: filename, type } as any);
 
-    const response = await api.post<DiseaseResult>('/disease/detect', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
+        const response = await api.post<DiseaseResult>('/disease/detect', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 90000, // 90 seconds for disease detection (image upload + model inference)
+        });
+        return response.data;
+    } catch (error: any) {
+        console.error('Disease detection error:', error.message);
+        if (error.code === 'ECONNABORTED') {
+            throw new Error('Request timeout. Please try with a smaller image or check your connection.');
+        }
+        throw error;
+    }
 };
 
 export const recommendCrops = async (params: any): Promise<CropResponse> => {

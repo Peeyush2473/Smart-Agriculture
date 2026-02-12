@@ -19,6 +19,7 @@ async def detect_disease(file: UploadFile = File(...)):
         return DiseaseDetectionResponse(
             disease_name=result["disease_name"],
             confidence=result["confidence"],
+            symptoms=result["symptoms"],
             treatment=result["treatment"],
             description=result["description"]
         )

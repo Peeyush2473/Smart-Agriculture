@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,15 +6,66 @@ import { detectDisease } from '../services/featureService';
 import { DiseaseResult } from '../types';
 import { Card, Button } from '../components';
 import { colors, typography } from '../theme';
+import axios from 'axios';
 
 const DiseaseScreen = ({ navigation }: any) => {
     const [image, setImage] = useState<string | null>(null);
     const [result, setResult] = useState<DiseaseResult | null>(null);
     const [loading, setLoading] = useState(false);
+    const [imageReady, setImageReady] = useState(false);
+    const [backendHealthy, setBackendHealthy] = useState(false);
+    const [checkingBackend, setCheckingBackend] = useState(true);
+
+    // Check backend health on mount
+    useEffect(() => {
+        const checkBackendHealth = async () => {
+            try {
+                const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+                await axios.get(`${baseUrl}/health`, { timeout: 5000 });
+                setBackendHealthy(true);
+            } catch (error) {
+                console.error('Backend health check failed:', error);
+                setBackendHealthy(false);
+                Alert.alert(
+                    'Backend Unavailable',
+                    'Could not connect to the backend server. Please ensure the backend is running.',
+                    [
+                        {
+                            text: 'Retry',
+                            onPress: () => {
+                                setCheckingBackend(true);
+                                checkBackendHealth();
+                            }
+                        },
+                        { text: 'OK' }
+                    ]
+                );
+            } finally {
+                setCheckingBackend(false);
+            }
+        };
+
+        checkBackendHealth();
+    }, []);
+
+    // When image changes, wait a bit to ensure it's loaded
+    useEffect(() => {
+        if (image) {
+            setImageReady(false);
+            // Small delay to ensure image is fully loaded before enabling analyze
+            const timer = setTimeout(() => {
+                setImageReady(true);
+            }, 800); // 800ms delay for image to stabilize
+
+            return () => clearTimeout(timer);
+        } else {
+            setImageReady(false);
+        }
+    }, [image]);
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
@@ -46,14 +97,15 @@ const DiseaseScreen = ({ navigation }: any) => {
     };
 
     const handleAnalyze = async () => {
-        if (!image) return;
+        if (!image || !imageReady || !backendHealthy) return;
         setLoading(true);
         try {
             const data = await detectDisease(image);
             setResult(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            Alert.alert('Error', 'Failed to analyze image');
+            const errorMessage = error.message || 'Failed to analyze image. Please check your network connection and try again.';
+            Alert.alert('Error', errorMessage);
         } finally {
             setLoading(false);
         }
@@ -66,6 +118,15 @@ const DiseaseScreen = ({ navigation }: any) => {
 
     const isHealthy = result?.disease_name?.toLowerCase().includes('healthy');
     const statusColor = isHealthy ? colors.success : colors.error;
+
+    const getAnalyzeButtonText = () => {
+        if (checkingBackend) return "Checking backend...";
+        if (!backendHealthy) return "Backend unavailable";
+        if (!imageReady) return "Preparing image...";
+        return "Analyze Disease";
+    };
+
+    const isAnalyzeDisabled = !imageReady || loading || !backendHealthy || checkingBackend;
 
     return (
         <View style={styles.container}>
@@ -104,9 +165,10 @@ const DiseaseScreen = ({ navigation }: any) => {
                         {!result && (
                             <View style={styles.analyzeOverlay}>
                                 <Button
-                                    title="Analyze Disease"
+                                    title={getAnalyzeButtonText()}
                                     onPress={handleAnalyze}
                                     loading={loading}
+                                    disabled={isAnalyzeDisabled}
                                     variant="primary"
                                     style={styles.analyzeButton}
                                 />
@@ -136,7 +198,7 @@ const DiseaseScreen = ({ navigation }: any) => {
                             </View>
                             <View style={styles.resultHeaderText}>
                                 <Text style={styles.resultTitle}>
-                                    {result.disease_name.replace(/_/g, ' ')}
+                                    {result.disease_name}
                                 </Text>
                                 <View style={styles.confidenceBadge}>
                                     <Text style={[styles.confidenceText, { color: statusColor }]}>
@@ -148,12 +210,26 @@ const DiseaseScreen = ({ navigation }: any) => {
 
                         <View style={styles.divider} />
 
-                        <View style={styles.treatmentSection}>
+                        {result.symptoms && (
+                            <>
+                                <View style={styles.infoSection}>
+                                    <View style={styles.sectionTitleRow}>
+                                        <Ionicons name="information-circle-outline" size={20} color={colors.text} />
+                                        <Text style={styles.sectionTitle}>Symptoms</Text>
+                                    </View>
+                                    <Text style={styles.infoText}>{result.symptoms}</Text>
+                                </View>
+
+                                <View style={styles.divider} />
+                            </>
+                        )}
+
+                        <View style={styles.infoSection}>
                             <View style={styles.sectionTitleRow}>
                                 <Ionicons name="medkit-outline" size={20} color={colors.text} />
                                 <Text style={styles.sectionTitle}>Treatment & Care</Text>
                             </View>
-                            <Text style={styles.treatmentText}>{result.treatment}</Text>
+                            <Text style={styles.infoText}>{result.treatment}</Text>
                         </View>
                     </Card>
                 )}
@@ -331,7 +407,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.border,
         marginBottom: 20,
     },
-    treatmentSection: {
+    infoSection: {
         gap: 8,
     },
     sectionTitleRow: {
@@ -345,7 +421,7 @@ const styles = StyleSheet.create({
         fontWeight: typography.fontWeights.bold,
         color: colors.text,
     },
-    treatmentText: {
+    infoText: {
         fontSize: typography.fontSizes.md,
         color: colors.textLight,
         lineHeight: 24,

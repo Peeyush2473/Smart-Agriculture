@@ -12,6 +12,7 @@ export interface AuthResponse {
 export interface DiseaseResult {
     disease_name: string;
     confidence: number;
+    symptoms?: string;
     treatment?: string;
     description?: string;
 }
