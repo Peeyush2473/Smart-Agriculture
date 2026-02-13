@@ -12,7 +12,7 @@ If you haven't already, clone the repository and set up your environment:
 git clone https://github.com/Peeyush2473/Smart-Agriculture.git
 
 # Enter the directory
-cd Smart-Agriculture
+cd Smart-Agricultur
 
 # Setup virtual environment (Recommended)
 python -m venv venv
