@@ -20,6 +20,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r backend/requirements.txt
+
+cd mobile
+npm install
 ```
 ## 2. The Daily Workflow (Every time you work)
 Before starting any work, ensure you pull the latest changes.
@@ -65,8 +68,6 @@ Request Review: On the right sidebar, they should select you or another teammate
 Merge Queue: Once you (the admin) approve it, they click "Add to merge queue."
 ## 6. After Push
 Once you push, you must follow these steps on the website:
-1. Go to the Smart-Agriculture Repo.
-2. Click the "Compare & pull request" button that appears.
-3. Fill out the Template: Use the PR template we set up to explain what changed.
-4. Request Review: On the right sidebar, they should select someone as a "Reviewer."
-5. Merge Queue: Once you (the admin) approve it, they click "Add to merge queue."
+- Go to the Smart-Agriculture Repo.
+- Click the "Compare & pull request" button that appears.
+- Fill out the Template: Use the PR template we set up to explain what changed.
