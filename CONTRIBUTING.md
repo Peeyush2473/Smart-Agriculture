@@ -19,7 +19,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 ## 2. The Daily Workflow (Every time you work)
 Before starting any work, ensure you pull the latest changes.
