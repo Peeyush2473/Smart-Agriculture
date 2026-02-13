@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.schemas.crop import CropRecommendationCreate, CropRecommendationResponse
 from app.api import deps
 from app.services.crop_service import crop_service
-import random
 
 router = APIRouter()
 

@@ -1,7 +1,6 @@
 import joblib
 import numpy as np
 import os
-from typing import List
 from app.core.config import settings
 
 # Define paths

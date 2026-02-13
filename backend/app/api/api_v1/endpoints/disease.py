@@ -1,9 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.schemas.disease import DiseaseDetectionResponse
 from app.services.disease_service import disease_service
-import shutil
-import os
-import random
 
 router = APIRouter()
 
