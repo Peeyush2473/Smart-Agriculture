@@ -10,7 +10,7 @@ The project is broken down into modular services, ensuring clean abstraction bet
    - Manages user registrations and log in flows securely.
    - Provides JWT-based authentication to secure the inner agricultural tools.
 2. **Plant Disease Detection Service** (`/disease`)
-   - **How it works:** Users capture or upload an image of a plant/leaf. The app sends the image to the backend which utilizes a trained machine learning model (Accuracy: **96.67%**) to detect potential diseases.
+   - **How it works:** Users capture or upload an image of a plant/leaf. The app sends the image to the backend which utilizes a trained machine learning model (Accuracy: **95.6729%**) to detect potential diseases.
    - **Output:** Returns the identified disease, confidence level, associated symptoms, and a comprehensive treatment or prevention plan.
 3. **Crop Recommendation Service** (`/crops`)
    - **How it works:** Users input their soil nutrient values (Nitrogen, Phosphorous, Potassium), soil pH level, temperature, humidity, and rainfall. 
@@ -18,19 +18,96 @@ The project is broken down into modular services, ensuring clean abstraction bet
 4. **Weather Intelligence Service** (`/weather`)
    - Real-time weather viewing and forecasting capabilities to help farmers anticipate changing conditions.
 
-## 🏗 System Architecture & Technology Stack
+## 🏗 App Architecture & How It Works
 
-The project operates on a modern, decoupled architecture allowing separate scaling of the database, backend APIs, and the mobile GUI.
+The Smart Agriculture System operates on a modern, decoupled client-server architecture. This design cleanly separates the user interface from the heavy data processing and machine learning inference, allowing each component to scale independently.
 
-- **Mobile Application (Frontend)**
-  - Built using **React Native (Expo)** and **TypeScript**.
-  - Provides a cross-platform (iOS and Android) interface. Mobile components are modularized under `mobile/src/`.
-- **Backend API Server**
-  - Built with **FastAPI (Python)**, offering asynchronous and lightning-fast request handling.
-  - Leverages **SQLAlchemy** for ORM operations and **Pydantic** for rigorous data validation.
-  - Integrates highly accurate, trained machine learning models for real-time agricultural analysis.
-- **Database**
-  - **PostgreSQL**, effortlessly containerized using **Docker** for local development.
+### 🔄 End-to-End Data Flow
+
+```mermaid
+graph TD
+    subgraph Frontend
+        Mobile["📱 Mobile App (React Native)"]
+    end
+
+    subgraph Backend API
+        API["🌐 FastAPI Gateway (Routing)"]
+        Auth["🔒 Auth Middleware (JWT)"]
+        DiseaseSvc["🌿 Disease Service (TensorFlow)"]
+        CropSvc["🌾 Crop Service (Random Forest)"]
+    end
+
+    subgraph Database Layer
+        DB[("💾 PostgreSQL Database")]
+    end
+
+    Mobile -- "HTTP Request (JSON/Form-Data)" --> API
+    API --> Auth
+    Auth -- "Validated" --> API
+    
+    API -- "Image Upload" --> DiseaseSvc
+    API -- "Soil & Climate Data" --> CropSvc
+    
+    DiseaseSvc <--> |"Read/Write Data"| DB
+    CropSvc <--> |"Read/Write Data"| DB
+    
+    DiseaseSvc -- "Disease & Treatment" --> API
+    CropSvc -- "Top Crop Recs" --> API
+    
+    API -- "JSON Response" --> Mobile
+
+    classDef frontend fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#000;
+    classDef backend fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#000;
+    classDef database fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#000;
+
+    class Mobile frontend;
+    class API,Auth,DiseaseSvc,CropSvc backend;
+    class DB database;
+```
+
+Here is a step-by-step breakdown of how the application functions behind the scenes:
+
+1. **User Interaction (Client Side):**
+   - The user interacts with the React Native mobile application (e.g., taking a photo of a diseased leaf or entering soil parameters).
+   - The mobile application's UI components trigger actions that collect this data.
+
+2. **Network Request:**
+   - The app uses its internal API connector (`mobile/src/services/api.ts`) to format the user's data and securely send it over HTTP to the backend server.
+   - For images, the app handles `multipart/form-data` uploads; for crop/weather data, it sends standard `JSON` payloads.
+
+3. **API Routing & Validation (Server Side):**
+   - The **FastAPI** backend receives the incoming request.
+   - The request is first intercepted by authentication middleware to ensure the user has a valid JWT token.
+   - The data is then strictly validated using **Pydantic** schemas (`backend/app/schemas/`) to prevent malformed data from causing internal server errors.
+
+4. **Service Execution & Machine Learning Inference:**
+   - Validated data is passed to the core business logic (`backend/app/services/`).
+   - **Disease Detection Flow:** The `disease_service.py` takes the image bytes, preprocesses them to match the required dimensions of the ML model, and runs inference. It then maps the output class to a comprehensive database of diseases, symptoms, and treatments.
+   - **Crop Recommendation Flow:** The `crop_service.py` feeds the tabular soil/climate data into a trained Random Forest model, which computes the probabilities of various crops and returns the top recommendations.
+
+5. **Data Persistence (Database):**
+   - If the operation requires saving user history (e.g., logging a previous scan), the backend uses **SQLAlchemy** to convert the Python objects into SQL queries.
+   - These records are seamlessly stored in the **PostgreSQL** database instance.
+
+6. **Response & GUI Update:**
+   - The backend packages the inference results into a structured JSON response and sends it back to the mobile application.
+   - The React Native app receives the response, updates its internal state, and dynamically renders the results to the user (e.g., displaying the disease name, symptoms, and treatment plan).
+
+### 🛠 Comprehensive Technology Stack
+
+- **Mobile Application (Frontend / Client)**
+  - **Framework:** React Native with Expo.
+  - **Language:** TypeScript for type-safe code.
+  - **Routing:** React Navigation.
+  - **Networking:** Axios for handling HTTP communication.
+- **Backend API Server (Backend / Server)**
+  - **Framework:** FastAPI (Python 3.9+).
+  - **Data Validation:** Pydantic.
+  - **ORM (Object Relational Mapper):** SQLAlchemy.
+  - **AI / Machine Learning:** Custom trained models (TensorFlow/Scikit-Learn) deployed for real-time inference.
+- **Data Layer (Database)**
+  - **Relational DB:** PostgreSQL.
+  - **Containerization:** Docker & Docker Compose for rapid ecosystem provisioning.
 
 ## 📂 Project Structure
 
