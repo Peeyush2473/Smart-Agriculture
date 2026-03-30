@@ -40,7 +40,7 @@ class ProfitabilityService:
                 rank=0 # Will be populated later 
             ))
             
-        # Rank the results based on net profit descending
+        # Rank the results based on net profit descending order
         results.sort(key=lambda x: x.net_profit, reverse=True)
         
         # Assign ranks
