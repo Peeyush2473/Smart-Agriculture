@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.db.database import engine, Base
 # Import models to ensure they are registered with Base
 from app.models import user
+from app.models import marketplace
 
 # Create tables
 Base.metadata.create_all(bind=engine)

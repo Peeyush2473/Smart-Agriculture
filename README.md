@@ -45,6 +45,12 @@ The project is broken down into modular services, ensuring clean abstraction bet
    - **Output:** The service utilizes a trained **Random Forest** model (Accuracy: **99.8%**) via `crop_service.py` to analyze these parameters and recommends the top suitable crops optimized for the specified environment.
 4. **Weather Intelligence Service** (`/weather`)
    - Real-time weather viewing and forecasting capabilities to help farmers anticipate changing conditions.
+5. **Equipment & Labor Marketplace** (`/marketplace`)
+   - **Rent Equipment:** Browse and rent tractors, harvesters, drones, sprayers, tillers, seeders, and other agricultural tools from nearby owners.
+   - **Hire Labor:** Find and hire skilled farm workers filtered by skills (planting, harvesting, spraying, irrigation, etc.), location, experience, and ratings.
+   - **Book Services:** Book equipment or labor directly from the app with automatic cost estimation. Track all bookings with status updates (pending → confirmed → completed).
+   - **Reviews & Ratings:** Leave and view ratings for equipment and labor providers to help the community make informed decisions.
+   - **Seed Data:** Comes pre-loaded with sample equipment and labor listings across major Indian agricultural regions for demonstration.
 
 ## 🏗 App Architecture & How It Works
 
@@ -63,6 +69,7 @@ graph TD
         Auth["🔒 Auth Middleware (JWT)"]
         DiseaseSvc["🌿 Disease Service (TensorFlow)"]
         CropSvc["🌾 Crop Service (Random Forest)"]
+        MarketSvc["🏪 Marketplace Service"]
     end
 
     subgraph Database Layer
@@ -75,12 +82,15 @@ graph TD
     
     API -- "Image Upload" --> DiseaseSvc
     API -- "Soil & Climate Data" --> CropSvc
+    API -- "Booking/Search" --> MarketSvc
     
     DiseaseSvc <--> |"Read/Write Data"| DB
     CropSvc <--> |"Read/Write Data"| DB
+    MarketSvc <--> |"Equipment/Labor/Bookings"| DB
     
     DiseaseSvc -- "Disease & Treatment" --> API
     CropSvc -- "Top Crop Recs" --> API
+    MarketSvc -- "Listings & Bookings" --> API
     
     API -- "JSON Response" --> Mobile
 
@@ -89,7 +99,7 @@ graph TD
     classDef database fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#000;
 
     class Mobile frontend;
-    class API,Auth,DiseaseSvc,CropSvc backend;
+    class API,Auth,DiseaseSvc,CropSvc,MarketSvc backend;
     class DB database;
 ```
 
@@ -143,12 +153,24 @@ Here is a step-by-step breakdown of how the application functions behind the sce
 .
 ├── backend/                           # Fast API Python backend
 │   ├── app/
-│   │   ├── api/api_v1/endpoints/      # API Controllers (auth, disease, crops, weather)
+│   │   ├── api/api_v1/endpoints/      # API Controllers
+│   │   │   ├── auth.py                # Authentication endpoints
+│   │   │   ├── disease.py             # Disease detection endpoints
+│   │   │   ├── crops.py               # Crop recommendation endpoints
+│   │   │   ├── weather.py             # Weather intelligence endpoints
+│   │   │   └── marketplace.py         # 🆕 Equipment & Labor Marketplace endpoints
 │   │   ├── core/                      # Configs & security logic
 │   │   ├── db/                        # PostgreSQL DB session & setup
 │   │   ├── models/                    # SQLAlchemy DB Models
+│   │   │   ├── user.py                # User model
+│   │   │   └── marketplace.py         # 🆕 Equipment, LaborProvider, Booking, Review models
 │   │   ├── schemas/                   # Pydantic schemas for request/response validation
-│   │   └── services/                  # Core Business Logic (disease_service.py, crop_service.py)
+│   │   │   ├── auth.py, crop.py, ...  # Existing schemas
+│   │   │   └── marketplace.py         # 🆕 Marketplace request/response schemas
+│   │   └── services/                  # Core Business Logic
+│   │       ├── disease_service.py     # Disease detection ML inference
+│   │       ├── crop_service.py        # Crop recommendation ML inference
+│   │       └── marketplace_service.py # 🆕 Marketplace CRUD, booking, reviews, seed data
 │   ├── main.py                        # FastAPI application entry point
 │   └── requirements.txt               # Python package dependencies
 ├── mobile/                            # React Native App
@@ -156,7 +178,15 @@ Here is a step-by-step breakdown of how the application functions behind the sce
 │   │   ├── components/                # Reusable UI components
 │   │   ├── navigation/                # React Navigation routing
 │   │   ├── screens/                   # Distinct mobile app pages
-│   │   ├── services/                  # Network configuration and API connectors (e.g., api.ts)
+│   │   │   ├── HomeScreen.tsx         # Dashboard with feature cards
+│   │   │   ├── DiseaseScreen.tsx      # Disease detection screen
+│   │   │   ├── CropRecommendationScreen.tsx
+│   │   │   ├── WeatherScreen.tsx      # Weather intelligence screen
+│   │   │   └── MarketplaceScreen.tsx  # 🆕 Equipment & Labor Marketplace screen
+│   │   ├── services/                  # Network configuration and API connectors
+│   │   │   ├── api.ts                 # Base Axios instance
+│   │   │   ├── featureService.ts      # Disease, crop, weather API calls
+│   │   │   └── marketplaceService.ts  # 🆕 Marketplace API calls
 │   │   ├── theme/                     # Styling variables
 │   │   └── types/                     # TypeScript shared interfaces
 │   └── package.json                   # JS/TS dependencies
@@ -226,3 +256,7 @@ After the server initializes, you will see a QR code in the terminal.
 ## 🤝 Roadmap & Contribution
 - Expand the dataset for the **Plant Disease Detection** model to support a wider array of crops and localized diseases.
 - Integrate real-time edge inference directly on the mobile device utilizing **TensorFlow Lite** for offline operability.
+- ✅ **Equipment & Labor Marketplace** — Rent tractors, harvesters, tools, hire labor, and book services directly from the app.
+- Add **location-based proximity search** for marketplace listings using GPS coordinates.
+- Implement **in-app chat** between equipment owners, labor providers, and farmers.
+- Integrate **payment gateway** (Razorpay/UPI) for secure in-app transactions.
