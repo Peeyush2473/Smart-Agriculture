@@ -71,6 +71,20 @@ const HomeScreen = ({ navigation }: any) => {
                         onPress={() => navigation.navigate('Weather')}
                     />
                     <FeatureCard
+                        title="Profit Compare"
+                        description="Compare crop profits"
+                        icon="📈"
+                        color="#ff9800"
+                        onPress={() => navigation.navigate('ProfitComparison')}
+                    />
+                    <FeatureCard
+                        title="Schemes"
+                        description="Gov. compensation"
+                        icon="🛡️"
+                        color="#e91e63"
+                        onPress={() => navigation.navigate('SchemeFilter')}
+                    />
+                    <FeatureCard
                         title="Advisory"
                         description="Farming tips & guides"
                         icon="💡"

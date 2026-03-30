@@ -7,6 +7,9 @@ import HomeScreen from '../screens/HomeScreen';
 import DiseaseScreen from '../screens/DiseaseScreen';
 import CropRecommendationScreen from '../screens/CropRecommendationScreen';
 import WeatherScreen from '../screens/WeatherScreen';
+import ProfitComparisonScreen from '../screens/ProfitComparisonScreen';
+import SchemeFilterScreen from '../screens/SchemeFilterScreen';
+import SchemeListScreen from '../screens/SchemeListScreen';
 
 const Stack = createStackNavigator();
 
@@ -20,6 +23,9 @@ const AppNavigator = () => {
                 <Stack.Screen name="Disease" component={DiseaseScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Crops" component={CropRecommendationScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Weather" component={WeatherScreen} options={{ title: 'Weather Intelligence' }} />
+                <Stack.Screen name="ProfitComparison" component={ProfitComparisonScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="SchemeFilter" component={SchemeFilterScreen} options={{ title: 'Find Schemes' }} />
+                <Stack.Screen name="SchemeList" component={SchemeListScreen} options={{ title: 'Available Schemes' }} />
             </Stack.Navigator>
         </NavigationContainer>
     );

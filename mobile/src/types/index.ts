@@ -42,3 +42,44 @@ export interface WeatherData {
     forecast: WeatherForecastItem[];
     alerts: string[];
 }
+
+export interface CropComparisonInput {
+    crop_name: string;
+    cultivation_cost: number;
+    expected_yield: number;
+    market_price: number;
+    weather_condition: 'good' | 'average' | 'poor';
+}
+
+export interface CropProfitResult {
+    crop_name: string;
+    revenue: number;
+    total_cost: number;
+    net_profit: number;
+    roi_percentage: number;
+    rank: number;
+}
+
+export interface ProfitComparisonRequest {
+    crops: CropComparisonInput[];
+}
+
+
+export interface ProfitResponse {
+    comparison_results: CropProfitResult[];
+}
+
+export interface Scheme {
+    id: string;
+    name: string;
+    description: string;
+    benefits: string;
+    eligibility: string;
+    deadline: string;
+    apply_link: string;
+}
+
+export interface SchemeSuggestionResponse {
+    schemes: Scheme[];
+}
+
