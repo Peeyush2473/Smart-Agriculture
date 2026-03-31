@@ -85,18 +85,12 @@ const HomeScreen = ({ navigation }: any) => {
                         onPress={() => navigation.navigate('SchemeFilter')}
                     />
                     <FeatureCard
-                        title="Advisory"
-                        description="Farming tips & guides"
-                        icon="💡"
-                        color="#9c27b0"
-                        onPress={() => alert('Coming Soon')}
-                    />
-                    <FeatureCard
                         title="Marketplace"
                         description="Rent & hire services"
                         icon="🏪"
                         color="#E65100"
                         onPress={() => navigation.navigate('Marketplace')}
+                    />
                 </View>
             </ScrollView>
         </View>

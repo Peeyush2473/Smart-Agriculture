@@ -282,11 +282,26 @@ const MarketplaceScreen = ({ navigation }: any) => {
             if (selectedCategory) params.category = selectedCategory;
             if (searchQuery) params.q = searchQuery;
             const data = await getEquipmentList(params);
-            setEquipment(data.items);
+            if (data.items && data.items.length > 0) {
+                setEquipment(data.items);
+                return;
+            }
+            throw new Error("Empty data");
         } catch (err: any) {
-            console.log('Equipment load error:', err.message);
-            // If API fails, load demo data
-            setEquipment(DEMO_EQUIPMENT);
+            console.log('Equipment load error/empty:', err.message);
+            // If API fails or empty, load demo data with local filtering
+            let filtered = DEMO_EQUIPMENT;
+            if (selectedCategory) {
+                filtered = filtered.filter(item => item.category === selectedCategory);
+            }
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(item => 
+                    item.name.toLowerCase().includes(q) || 
+                    item.description?.toLowerCase().includes(q)
+                );
+            }
+            setEquipment(filtered);
         }
     };
 
@@ -296,10 +311,27 @@ const MarketplaceScreen = ({ navigation }: any) => {
             if (selectedSkill) params.skills = selectedSkill;
             if (searchQuery) params.q = searchQuery;
             const data = await getLaborList(params);
-            setLabor(data.items);
+            if (data.items && data.items.length > 0) {
+                setLabor(data.items);
+                return;
+            }
+            throw new Error("Empty data");
         } catch (err: any) {
-            console.log('Labor load error:', err.message);
-            setLabor(DEMO_LABOR);
+            console.log('Labor load error/empty:', err.message);
+            // If API fails or empty, load demo data with local filtering
+            let filtered = DEMO_LABOR;
+            if (selectedSkill) {
+                filtered = filtered.filter(item => item.skills.includes(selectedSkill));
+            }
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(item => 
+                    item.name.toLowerCase().includes(q) || 
+                    item.bio?.toLowerCase().includes(q) ||
+                    item.skills.toLowerCase().includes(q)
+                );
+            }
+            setLabor(filtered);
         }
     };
 
@@ -720,6 +752,18 @@ const DEMO_EQUIPMENT: Equipment[] = [
         daily_rate: 400, hourly_rate: 80, location: 'Kolhapur, MH',
         is_available: true, condition: 'excellent', review_count: 20, avg_rating: 4.6,
     },
+    {
+        id: 6, owner_id: 2, name: 'John Deere Seed Drill', category: 'seeder',
+        description: 'High-precision seed drill for uniform planting of wheat and soybeans.',
+        daily_rate: 1800, hourly_rate: 300, location: 'Nashik, MH',
+        is_available: true, condition: 'good', review_count: 3, avg_rating: 4.1,
+    },
+    {
+        id: 7, owner_id: 3, name: 'Kirloskar 5HP Water Pump', category: 'other',
+        description: 'Diesel water pump for farm irrigation from open wells or canals.',
+        daily_rate: 800, hourly_rate: 150, location: 'Satara, MH',
+        is_available: true, condition: 'good', review_count: 7, avg_rating: 4.3,
+    },
 ];
 
 const DEMO_LABOR: LaborProvider[] = [
@@ -746,6 +790,18 @@ const DEMO_LABOR: LaborProvider[] = [
         experience_years: 20, daily_rate: 500, hourly_rate: 65, location: 'Nagpur, MH',
         is_available: true, bio: '20 years cotton & soybean farming. Highly reliable.',
         rating: 4.9, total_jobs: 200, review_count: 60,
+    },
+    {
+        id: 5, user_id: 2, name: 'Suresh Patil', skills: 'transport,general',
+        experience_years: 8, daily_rate: 800, hourly_rate: 100, location: 'Pune, Maharashtra',
+        is_available: true, bio: 'Experienced tractor and truck driver for farm produce transport.',
+        rating: 4.5, total_jobs: 45, review_count: 15,
+    },
+    {
+        id: 6, user_id: 3, name: 'Anita Sharma', skills: 'spraying,weeding,planting',
+        experience_years: 5, daily_rate: 450, hourly_rate: 60, location: 'Nashik, MH',
+        is_available: true, bio: 'Fast and reliable. Specialized in delicate crop handling.',
+        rating: 4.8, total_jobs: 60, review_count: 22,
     },
 ];
 
