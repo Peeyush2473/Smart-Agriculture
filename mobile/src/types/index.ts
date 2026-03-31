@@ -177,3 +177,14 @@ export interface MarketplaceStats {
     available_equipment: number;
     available_labor: number;
 }
+
+export interface EquipmentCreateInput {
+    name: string;
+    category: string;
+    daily_rate: number;
+    hourly_rate?: number;
+    location: string;
+    condition: string;
+    description?: string;
+    is_available: boolean;
+}
