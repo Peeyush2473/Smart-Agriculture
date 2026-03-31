@@ -83,3 +83,97 @@ export interface SchemeSuggestionResponse {
     schemes: Scheme[];
 }
 
+// ─── Marketplace Types ──────────────────────────────────────────────────────
+
+export interface Equipment {
+    id: number;
+    owner_id: number;
+    name: string;
+    category: string;
+    description?: string;
+    daily_rate: number;
+    hourly_rate?: number;
+    location: string;
+    latitude?: number;
+    longitude?: number;
+    is_available: boolean;
+    condition: string;
+    image_url?: string;
+    avg_rating?: number;
+    review_count: number;
+    created_at?: string;
+}
+
+export interface EquipmentListResponse {
+    items: Equipment[];
+    total: number;
+    page: number;
+    page_size: number;
+}
+
+export interface LaborProvider {
+    id: number;
+    user_id: number;
+    name: string;
+    skills: string;
+    experience_years: number;
+    daily_rate: number;
+    hourly_rate?: number;
+    location: string;
+    latitude?: number;
+    longitude?: number;
+    is_available: boolean;
+    phone?: string;
+    bio?: string;
+    rating: number;
+    total_jobs: number;
+    review_count: number;
+    created_at?: string;
+}
+
+export interface LaborProviderListResponse {
+    items: LaborProvider[];
+    total: number;
+    page: number;
+    page_size: number;
+}
+
+export interface Booking {
+    id: number;
+    user_id: number;
+    booking_type: 'equipment' | 'labor';
+    equipment_id?: number;
+    labor_provider_id?: number;
+    start_date: string;
+    end_date: string;
+    total_cost: number;
+    status: string;
+    notes?: string;
+    equipment_name?: string;
+    labor_provider_name?: string;
+    created_at?: string;
+}
+
+export interface BookingListResponse {
+    items: Booking[];
+    total: number;
+}
+
+export interface Review {
+    id: number;
+    user_id: number;
+    equipment_id?: number;
+    labor_provider_id?: number;
+    rating: number;
+    comment?: string;
+    reviewer_name?: string;
+    created_at?: string;
+}
+
+export interface MarketplaceStats {
+    total_equipment: number;
+    total_labor_providers: number;
+    total_bookings: number;
+    available_equipment: number;
+    available_labor: number;
+}

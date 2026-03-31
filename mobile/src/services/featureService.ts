@@ -14,7 +14,7 @@ export const detectDisease = async (imageUri: string): Promise<DiseaseResult> =>
             const blob = await res.blob();
             formData.append('file', blob, filename);
         } else {
-            // React Native native platforms
+            // React Native FormData handling for images
             const match = /\.(\w+)$/.exec(filename);
             const type = match ? `image/${match[1]}` : `image`;
             formData.append('file', { uri: imageUri, name: filename, type } as any);
