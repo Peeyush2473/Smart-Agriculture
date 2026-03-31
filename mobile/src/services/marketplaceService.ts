@@ -4,6 +4,7 @@ import {
     LaborProvider, LaborProviderListResponse,
     Booking, BookingListResponse,
     Review, MarketplaceStats,
+    EquipmentCreateInput,
 } from '../types';
 
 // ─── Stats ──────────────────────────────────────────────────────────────────
@@ -36,6 +37,12 @@ export const getEquipmentById = async (id: number): Promise<Equipment> => {
     const response = await api.get<Equipment>(`/marketplace/equipment/${id}`);
     return response.data;
 };
+
+export const createEquipment = async (data: EquipmentCreateInput): Promise<Equipment> => {
+    const response = await api.post<Equipment>('/marketplace/equipment', data);
+    return response.data;
+};
+
 
 // ─── Labor Providers ────────────────────────────────────────────────────────
 

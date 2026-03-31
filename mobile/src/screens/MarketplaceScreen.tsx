@@ -12,8 +12,9 @@ import {
 } from '../types';
 import {
     getEquipmentList, getLaborList, getMarketplaceStats,
-    seedMarketplace, createBooking, getMyBookings,
+    seedMarketplace, createBooking, getMyBookings, createEquipment,
 } from '../services/marketplaceService';
+import { EquipmentCreateInput } from '../types';
 
 // ─── Category Config ────────────────────────────────────────────────────────
 
@@ -265,6 +266,17 @@ const MarketplaceScreen = ({ navigation }: any) => {
     const [bookingNotes, setBookingNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
+    // List Equipment modal state
+    const [listModal, setListModal] = useState(false);
+    const [listSubmitting, setListSubmitting] = useState(false);
+    const [listName, setListName] = useState('');
+    const [listCategory, setListCategory] = useState('tractor');
+    const [listDailyRate, setListDailyRate] = useState('');
+    const [listHourlyRate, setListHourlyRate] = useState('');
+    const [listLocation, setListLocation] = useState('');
+    const [listCondition, setListCondition] = useState('good');
+    const [listDescription, setListDescription] = useState('');
+
     // ── Data Loading ────────────────────────────────────────────────────────
 
     const loadStats = async () => {
@@ -399,6 +411,63 @@ const MarketplaceScreen = ({ navigation }: any) => {
             return bookingTarget.rate * days;
         } catch {
             return bookingTarget.rate;
+        }
+    };
+
+    // ── List Equipment (Add Vehicle for Rent) ───────────────────────────────
+
+    const openListModal = () => {
+        setListName('');
+        setListCategory('tractor');
+        setListDailyRate('');
+        setListHourlyRate('');
+        setListLocation('');
+        setListCondition('good');
+        setListDescription('');
+        setListModal(true);
+    };
+
+    const submitListEquipment = async () => {
+        if (!listName.trim()) {
+            Alert.alert('Missing Info', 'Please enter the vehicle/equipment name.');
+            return;
+        }
+        if (!listDailyRate || isNaN(Number(listDailyRate)) || Number(listDailyRate) <= 0) {
+            Alert.alert('Invalid Rate', 'Please enter a valid daily rate.');
+            return;
+        }
+        if (!listLocation.trim()) {
+            Alert.alert('Missing Info', 'Please enter the location.');
+            return;
+        }
+
+        setListSubmitting(true);
+        try {
+            const payload: EquipmentCreateInput = {
+                name: listName.trim(),
+                category: listCategory,
+                daily_rate: Number(listDailyRate),
+                hourly_rate: listHourlyRate ? Number(listHourlyRate) : undefined,
+                location: listLocation.trim(),
+                condition: listCondition,
+                description: listDescription.trim() || undefined,
+                is_available: true,
+            };
+            await createEquipment(payload);
+            Alert.alert(
+                '✅ Listed Successfully!',
+                `"${listName.trim()}" has been listed for rent on the marketplace.`,
+            );
+            setListModal(false);
+            if (activeTab === 'equipment') await loadEquipment();
+            await loadStats();
+        } catch (err: any) {
+            Alert.alert(
+                'Listing Failed',
+                err?.response?.data?.detail || err.message || 'Something went wrong. Please try again.',
+            );
+        } finally {
+            setListSubmitting(false);
         }
     };
 
@@ -606,6 +675,170 @@ const MarketplaceScreen = ({ navigation }: any) => {
                     )}
                 </ScrollView>
             )}
+
+            {/* ── FAB: List Your Vehicle ── */}
+            {activeTab === 'equipment' && (
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={openListModal}
+                    activeOpacity={0.85}
+                >
+                    <Text style={styles.fabIcon}>+</Text>
+                    <Text style={styles.fabLabel}>List Vehicle</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* ── List Equipment Modal ── */}
+            <Modal
+                visible={listModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setListModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <ScrollView
+                        style={styles.listModalScroll}
+                        contentContainerStyle={styles.listModalContent}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {/* Modal Header */}
+                        <View style={styles.modalHeader}>
+                            <View>
+                                <Text style={styles.listModalEmoji}>🚜</Text>
+                                <Text style={styles.listModalTitle}>List Your Vehicle</Text>
+                                <Text style={styles.listModalSubtitle}>Earn by renting out your equipment</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => setListModal(false)} style={styles.listModalCloseBtn}>
+                                <Text style={styles.modalClose}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.listFormDivider} />
+
+                        {/* Vehicle Name */}
+                        <Text style={styles.inputLabel}>Vehicle / Equipment Name *</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            value={listName}
+                            onChangeText={setListName}
+                            placeholder="e.g. Mahindra 575 DI Tractor"
+                            placeholderTextColor="#aaa"
+                        />
+
+                        {/* Category */}
+                        <Text style={styles.inputLabel}>Category *</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.listChipScroll}>
+                            <View style={styles.listChipRow}>
+                                {EQUIPMENT_CATEGORIES.filter(c => c.key !== '').map(cat => (
+                                    <TouchableOpacity
+                                        key={cat.key}
+                                        style={[
+                                            styles.listChip,
+                                            listCategory === cat.key && styles.listChipActive,
+                                        ]}
+                                        onPress={() => setListCategory(cat.key)}
+                                    >
+                                        <Text style={styles.listChipIcon}>{cat.icon}</Text>
+                                        <Text style={[
+                                            styles.listChipText,
+                                            listCategory === cat.key && styles.listChipTextActive,
+                                        ]}>{cat.label}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </ScrollView>
+
+                        {/* Rates */}
+                        <View style={styles.rateRow}>
+                            <View style={styles.rateHalf}>
+                                <Text style={styles.inputLabel}>Daily Rate (₹) *</Text>
+                                <TextInput
+                                    style={styles.modalInput}
+                                    value={listDailyRate}
+                                    onChangeText={setListDailyRate}
+                                    placeholder="e.g. 2500"
+                                    placeholderTextColor="#aaa"
+                                    keyboardType="numeric"
+                                />
+                            </View>
+                            <View style={styles.rateHalfGap} />
+                            <View style={styles.rateHalf}>
+                                <Text style={styles.inputLabel}>Hourly Rate (₹)</Text>
+                                <TextInput
+                                    style={styles.modalInput}
+                                    value={listHourlyRate}
+                                    onChangeText={setListHourlyRate}
+                                    placeholder="Optional"
+                                    placeholderTextColor="#aaa"
+                                    keyboardType="numeric"
+                                />
+                            </View>
+                        </View>
+
+                        {/* Location */}
+                        <Text style={styles.inputLabel}>Location *</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            value={listLocation}
+                            onChangeText={setListLocation}
+                            placeholder="e.g. Pune, Maharashtra"
+                            placeholderTextColor="#aaa"
+                        />
+
+                        {/* Condition */}
+                        <Text style={styles.inputLabel}>Condition *</Text>
+                        <View style={styles.listChipRow}>
+                            {[
+                                { key: 'excellent', label: 'Excellent', color: '#4CAF50' },
+                                { key: 'good', label: 'Good', color: '#FF9800' },
+                                { key: 'fair', label: 'Fair', color: '#F44336' },
+                            ].map(c => (
+                                <TouchableOpacity
+                                    key={c.key}
+                                    style={[
+                                        styles.conditionChip,
+                                        listCondition === c.key && { backgroundColor: c.color + '22', borderColor: c.color },
+                                    ]}
+                                    onPress={() => setListCondition(c.key)}
+                                >
+                                    <Text style={[
+                                        styles.conditionChipText,
+                                        listCondition === c.key && { color: c.color, fontWeight: '700' },
+                                    ]}>{c.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* Description */}
+                        <Text style={styles.inputLabel}>Description (optional)</Text>
+                        <TextInput
+                            style={[styles.modalInput, styles.notesInput]}
+                            value={listDescription}
+                            onChangeText={setListDescription}
+                            placeholder="Describe your equipment, capacity, age, any special features..."
+                            placeholderTextColor="#aaa"
+                            multiline
+                        />
+
+                        {/* Submit */}
+                        <TouchableOpacity
+                            style={[styles.submitButton, { backgroundColor: colors.primary, marginTop: 8 }]}
+                            onPress={submitListEquipment}
+                            disabled={listSubmitting}
+                            activeOpacity={0.8}
+                        >
+                            {listSubmitting ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.submitButtonText}>🚜 Submit Listing</Text>
+                            )}
+                        </TouchableOpacity>
+
+                        <View style={{ height: 20 }} />
+                    </ScrollView>
+                </View>
+            </Modal>
 
             {/* ── Booking Modal ── */}
             <Modal
@@ -1215,6 +1448,136 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
+    },
+
+    // FAB
+    fab: {
+        position: 'absolute',
+        bottom: 24,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.primary,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        borderRadius: 30,
+        elevation: 8,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.45,
+        shadowRadius: 10,
+        gap: 8,
+    },
+    fabIcon: {
+        fontSize: 22,
+        color: '#fff',
+        fontWeight: '700',
+        lineHeight: 24,
+    },
+    fabLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#fff',
+    },
+
+    // List Equipment Modal
+    listModalScroll: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        maxHeight: '94%',
+    },
+    listModalContent: {
+        padding: 24,
+        paddingBottom: 40,
+    },
+    listModalEmoji: {
+        fontSize: 32,
+        marginBottom: 4,
+    },
+    listModalTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: colors.text,
+    },
+    listModalSubtitle: {
+        fontSize: 13,
+        color: colors.textLight,
+        marginTop: 2,
+    },
+    listModalCloseBtn: {
+        padding: 4,
+        marginTop: 4,
+    },
+    listFormDivider: {
+        height: 1,
+        backgroundColor: colors.border,
+        marginVertical: 16,
+    },
+    listChipScroll: {
+        marginBottom: 4,
+    },
+    listChipRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 4,
+        marginTop: 2,
+    },
+    listChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        borderWidth: 1.5,
+        borderColor: '#E0E0E0',
+        marginBottom: 4,
+    },
+    listChipActive: {
+        backgroundColor: colors.primary + '18',
+        borderColor: colors.primary,
+    },
+    listChipIcon: {
+        fontSize: 14,
+    },
+    listChipText: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: colors.textLight,
+    },
+    listChipTextActive: {
+        color: colors.primary,
+        fontWeight: '700',
+    },
+    rateRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
+    rateHalf: {
+        flex: 1,
+    },
+    rateHalfGap: {
+        width: 12,
+    },
+    conditionChip: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderRadius: 10,
+        borderWidth: 1.5,
+        borderColor: '#E0E0E0',
+        backgroundColor: '#F5F5F5',
+        marginRight: 8,
+        marginTop: 4,
+        marginBottom: 8,
+    },
+    conditionChipText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: colors.textLight,
     },
 });
 
