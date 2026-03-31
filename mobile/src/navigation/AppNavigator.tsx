@@ -27,7 +27,7 @@ const AppNavigator = () => {
                 <Stack.Screen name="ProfitComparison" component={ProfitComparisonScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="SchemeFilter" component={SchemeFilterScreen} options={{ title: 'Find Schemes' }} />
                 <Stack.Screen name="SchemeList" component={SchemeListScreen} options={{ title: 'Available Schemes' }} />
-                <Stack.Screen name="Marketplace" component={MarketplaceScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Marketplace" component={MarketPlaceScreen} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>
     );
